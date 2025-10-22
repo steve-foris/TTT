@@ -1,0 +1,88 @@
+Hey Folks, i'm going try doing a new weekly post.
+
+Tech Tips on Tuesdays! 
+
+I often see "Learn Linux First" mentioned in the Devops posts on my feed, and I absolutely agree.
+
+Here are a couple of tools that helped me learn by exploring right from the shell:
+man -k <topic>
+eg: man -k disk
+
+Then man <command_of_interest> from that list to dive deeper. 
+This is probably how I learned 80% of the stuff I know. 
+
+There is also another very nice tool which can do a similar thing.
+tldr gives some background info and focuses on usage examples for most commands
+
+It’s available in both Debian and RPM-based distros as the tealdeer package.
+
+[xxxx@xxxx ~]$ podman run -ti -h tldr fedora #Drop into Fedora container for demo
+[root@tldr /]# yum -y install tealdeer &>/dev/null
+[root@tldr /]# tldr -u
+Successfully created cache directory path `/root/.cache/tealdeer`.
+Successfully updated cache.
+
+List some available pages:
+[root@tldr ~]# tldr -l | grep [a-z] | head 
+2to3
+7z
+7za
+7zr
+a2disconf
+a2dismod
+a2dissite
+a2enconf
+a2enmod
+a2ensite
+[root@tldr ~]# tldr 2to3 | head
+
+  Automated Python 2 to 3 code conversion.
+  This module has been deprecated since 3.11 and has been removed since 3.13.
+  For reference, see: <https://github.com/python/cpython/blob/8d42e2d915c3096e7eac1c649751d1da567bb7c3/Doc/whatsnew/3.13.rst?plain=1#L188>.
+  More information: <https://manned.org/2to3>.
+
+  Display the changes that would be performed without performing them (dry-run):
+
+      2to3 path/to/file.py
+...
+
+You can also search the pages by keyword, e.g. “disk”:
+
+[root@tldr ~]# grep -il disk /root/.cache/tealdeer/tldr-pages/pages/linux/* | head
+/root/.cache/tealdeer/tldr-pages/pages/linux/atop.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/balooctl.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/bcachefs.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/btrfs-device.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/btrfs-filesystem.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/caligula.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/certbot.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/cfdisk.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/dd.md
+/root/.cache/tealdeer/tldr-pages/pages/linux/ddrescue.md
+
+What is ddrescue?
+
+[root@tldr ~]# tldr ddrescue | head
+
+  Data recovery tool that reads data from damaged block devices.
+  More information: <https://www.gnu.org/software/ddrescue/manual/ddrescue_manual.html#Invoking-ddrescue>.
+
+  Take an image of a device, creating a log file:
+
+      sudo ddrescue /dev/sdb path/to/image.dd path/to/log.txt
+
+  Clone Disk A to Disk B, creating a log file:
+...
+
+[root@tldr ~]# 
+
+That is very handy :)
+
+You can learn a lot from directly inside the shell. 
+
+Note: I piped most commands to "head" for brevity leave off the "| head" part of these commands to see the full output.
+
+If you have other great Linux-learning tips, drop them below.
+Have a fantastic day!
+
+PS: Hey @LinkedIn it would be great to have code or markdown tags for shell / code sharing on this platform.

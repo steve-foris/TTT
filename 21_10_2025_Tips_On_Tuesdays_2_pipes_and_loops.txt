@@ -1,0 +1,117 @@
+Hey Folks,
+
+Welcome to Issue 2 of Tuesday Tech tips (yeah it is a little late, but it's still Tuesday in my TZ 😁)
+
+The main focus is on Linux in the bash shell and automation.
+I'll try to keep it short (hint.. it is not)
+
+Topic: Pipes redirects and CLI Loops
+Target Audience: Beginner / Intermediate
+
+You should already be familiar with cmds like: 
+ls,cd,ps,df,du,top,netstat,ss,nc,find,grep,sed,awk.
+
+Pipes are used to take the output of one command, and read it into another, this is really useful for automation right in the shell.
+
+Here is a basic example of using a pipe to check what port ollama is listing on.
+[root@xxxx]# netstat -plunt | grep ollama
+tcp        0      0 127.0.0.1:11434         0.0.0.0:*               LISTEN      3504/ollama         
+[root@xxxx]# 
+
+So this confirms that ollama is listening on port 11434
+
+Without the pipe of netstat '|' into grep we would see ALL of the tcp and udp connections on this host, you could also for example see all LISTENING processes with:
+# netstat -plunt | grep LISTEN
+
+The next thing to look at is bash loops.
+
+The most basic being a for loop:
+[root@xxxx]# for i in {1..3};do echo count $i;done
+count 1
+count 2
+count 3
+[root@xxxx]# 
+
+So.. now we are going to embark on a mission of combining shell pipes and loops and how to build them up.
+
+Note: we are working directly as root at the moment, because we need the containers to have their own IPs on the Podman bridge, which requires running rootful.
+
+Lets spin up 3 containers running a basic python web server.
+
+[root@xxxx]# for i in {1..3};do podman run -d -h web-test${i} --name web-test${i} localhost/py_web_test:latest;done
+<sha snip>
+[root@xxxx]# 
+
+Yay, we just automated running 3 containers using a for loop.
+
+[root@xxxx]# podman ps --format "{{.Names}}"
+web-test1
+web-test2
+web-test3
+[root@xxxx]# 
+
+Lets find the IP for one of them:
+
+[root@xxxx]# podman inspect web-test1 --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}'
+web-test1 10.88.0.15
+[root@xxxx]# 
+
+Now lets find the IP for each container by using a loop combining these commands in this loop we use the variable ctr as short hand for container, it is a variable and you could name it anything.
+
+[root@xxxx]# for ctr in $(podman ps --format "{{.Names}}");do podman inspect ${ctr} --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}';done
+web-test1 10.88.0.15
+web-test2 10.88.0.16
+web-test3 10.88.0.17
+[root@xxxx]# 
+
+So now with this information let's confirm we can ping the host, and pull a page from the website:
+
+[root@xxxx]# for ctr in $(podman ps --format "{{.Names}}");do podman inspect ${ctr} --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}';done | while read host ip;do echo -n $host/$ip:; ping -q -c1 -w1 $ip> /dev/null && echo UP || echo DOWN;done
+web-test1/10.88.0.15:UP
+web-test2/10.88.0.16:UP
+web-test3/10.88.0.17:UP
+[root@xxxx]# 
+
+Normal ping output was too, so I redirected it's output using a redirect > /dev/null, then the  "&& echo UP || echo DOWN" basically says"if return code was 0 echo UP else echo DOWN"
+
+While that looks busy and convoluted (it kinda does lol, there is also fping, but were doing a pipe and loop demo!). Anyway..  all I have actually done is recalled a previous command from history and then wrapped a for loop around it, and then updated the command with the variable from the loop. 
+
+So.. lets change that loop slightly and confirm curl works:
+
+[root@xxxx]# for ctr in $(podman ps --format "{{.Names}}");do podman inspect ${ctr} --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}';done | while read host ip;do echo "$host says: $(curl -sf $ip:8000)";done
+web-test1 says: hello from web-test1
+web-test2 says: hello from web-test2
+web-test3 says: hello from web-test3
+[root@xxxx]# 
+
+IF you want to cut down on the convolution a bit, you could do:
+
+Assign the output to a variable:
+[root@xxxx]# host_and_ip=$(for ctr in $(podman ps --format "{{.Names}}");do podman inspect ${ctr} --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}';done)
+
+[root@xxxx]# echo "$host_and_ip"
+web-test1 10.88.0.15
+web-test2 10.88.0.16
+web-test3 10.88.0.17
+
+So.. now we have the information in a variable and can simplify things.
+
+[root@xxxx]# while read host ip;do echo "$host says: $(curl -sf $ip:8000)";done <<<$host_and_ip
+web-test1 says: hello from web-test1
+web-test2 says: hello from web-test2
+web-test3 says: hello from web-test3
+[root@xxxx]# 
+
+And for ping.
+[root@xxxx]# while read host ip;do echo "$host $(fping $ip)";done <<<$host_and_ip
+web-test1 10.88.0.15 is alive
+web-test2 10.88.0.16 is alive
+web-test3 10.88.0.17 is alive
+[root@xxxx]# 
+
+My favorite resource to point bash beginners to is the ABSguide 
+https://tldp.org/LDP/abs/html/
+
+The main takeaway I want from this, is that these examples help you understand the concepts and modify them for your own needs eg: ssh into a group of hosts from an input list (like a basic ansible).
+
+This article has gone on more than long enough, I hope this helps you in your shell adventures, please feel free to drop your favorite shell tricks and tips below.
