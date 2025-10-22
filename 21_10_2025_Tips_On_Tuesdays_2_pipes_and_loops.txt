@@ -72,7 +72,7 @@ web-test2/10.88.0.16:UP
 web-test3/10.88.0.17:UP
 [root@xxxx]# 
 
-Normal ping output was too, so I redirected it's output using a redirect > /dev/null, then the  "&& echo UP || echo DOWN" basically says"if return code was 0 echo UP else echo DOWN"
+Normal ping output was too verbose, so I redirected it's output using a redirect > /dev/null, then the  "&& echo UP || echo DOWN" basically says"if return code was 0 echo UP else echo DOWN"
 
 While that looks busy and convoluted (it kinda does lol, there is also fping, but were doing a pipe and loop demo!). Anyway..  all I have actually done is recalled a previous command from history and then wrapped a for loop around it, and then updated the command with the variable from the loop. 
 
