@@ -1,6 +1,7 @@
 Hey Folks,
 
-Welcome to Issue 2 of Tuesday Tech tips (yeah it is a little late, but it's still Tuesday in my TZ 😁)
+Welcome to Issue 2 of Tuesday Tech tips (yeah it is a little late, 
+but it's still Tuesday in my TZ 😁)
 
 The main focus is on Linux in the bash shell and automation.
 I'll try to keep it short (hint.. it is not)
@@ -11,7 +12,8 @@ Target Audience: Beginner / Intermediate
 You should already be familiar with cmds like: 
 ls,cd,ps,df,du,top,netstat,ss,nc,find,grep,sed,awk.
 
-Pipes are used to take the output of one command, and read it into another, this is really useful for automation right in the shell.
+Pipes are used to take the output of one command, and read it into another, 
+this is really useful for automation right in the shell.
 
 Here is a basic example of using a pipe to check what port ollama is listing on.
 [root@xxxx]# netstat -plunt | grep ollama
@@ -20,7 +22,8 @@ tcp        0      0 127.0.0.1:11434         0.0.0.0:*               LISTEN      
 
 So this confirms that ollama is listening on port 11434
 
-Without the pipe of netstat '|' into grep we would see ALL of the tcp and udp connections on this host, you could also for example see all LISTENING processes with:
+Without the pipe of netstat '|' into grep we would see ALL of the tcp and udp
+connections on this host, you could also for example see all LISTENING processes with:
 # netstat -plunt | grep LISTEN
 
 The next thing to look at is bash loops.
@@ -32,9 +35,11 @@ count 2
 count 3
 [root@xxxx]# 
 
-So.. now we are going to embark on a mission of combining shell pipes and loops and how to build them up.
+So.. now we are going to embark on a mission of combining shell pipes and loops
+and how to build them up.
 
-Note: we are working directly as root at the moment, because we need the containers to have their own IPs on the Podman bridge, which requires running rootful.
+Note: we are working directly as root at the moment, because we need the
+containers to have their own IPs on the Podman bridge, which requires running rootful.
 
 Lets spin up 3 containers running a basic python web server.
 
@@ -56,7 +61,9 @@ Lets find the IP for one of them:
 web-test1 10.88.0.15
 [root@xxxx]# 
 
-Now lets find the IP for each container by using a loop combining these commands in this loop we use the variable ctr as short hand for container, it is a variable and you could name it anything.
+Now lets find the IP for each container by using a loop combining these commands
+in this loop we use the variable ctr as short hand for container, it is a variable 
+and you could name it anything.
 
 [root@xxxx]# for ctr in $(podman ps --format "{{.Names}}");do podman inspect ${ctr} --format '{{.Name}} {{ (index .NetworkSettings.Networks "podman").IPAddress }}';done
 web-test1 10.88.0.15
@@ -72,9 +79,19 @@ web-test2/10.88.0.16:UP
 web-test3/10.88.0.17:UP
 [root@xxxx]# 
 
-Normal ping output was too verbose, so I redirected it's output using a redirect > /dev/null, then the  "&& echo UP || echo DOWN" basically says"if return code was 0 echo UP else echo DOWN"
+Normal ping output was too verbose, so I redirected it's output using 
+a redirect > /dev/null, then the  "&& echo UP || echo DOWN" basically says 
+"if return code was 0 echo UP else echo DOWN"
 
-While that looks busy and convoluted (it kinda does lol, there is also fping, but were doing a pipe and loop demo!). Anyway..  all I have actually done is recalled a previous command from history and then wrapped a for loop around it, and then updated the command with the variable from the loop. 
+The other thing we have added is a while loop which reads the output from the 
+for loop, they are a great to use if you want to break down the fields in a file
+or output from a command, in this case we use it to read the host and ip from 
+the output of the for loop.
+
+While that looks busy and convoluted (it kinda does lol, there is also fping, 
+but were doing a pipe and loop demo!). Anyway..  all I have actually done is 
+recalled a previous command from history and then wrapped a for loop around it, 
+and then updated the command with the variable from the loop. 
 
 So.. lets change that loop slightly and confirm curl works:
 
@@ -112,6 +129,9 @@ web-test3 10.88.0.17 is alive
 My favorite resource to point bash beginners to is the ABSguide 
 https://tldp.org/LDP/abs/html/
 
-The main takeaway I want from this, is that these examples help you understand the concepts and modify them for your own needs eg: ssh into a group of hosts from an input list (like a basic ansible).
+The main takeaway I want from this, is that these examples help you understand
+the concepts and modify them for your own needs eg: ssh into a group of hosts
+from an input list (like a basic ansible).
 
-This article has gone on more than long enough, I hope this helps you in your shell adventures, please feel free to drop your favorite shell tricks and tips below.
+This article has gone on more than long enough, I hope this helps you in your 
+shell adventures, please feel free to drop your favorite shell tricks and tips below.
